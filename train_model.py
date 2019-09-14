@@ -21,12 +21,11 @@ get_custom_objects().update({"earth_movers_distance": earth_movers_distance, "ag
 
 def train_model():
     parser.add_argument("-d", "--train_sample_dir", help="Path to raw images for training")
-    parser.add_argument("-f", "--face_directory", help="Path to images of faces")
     parser.add_argument("-v", "--test_sample_dir", help="Path to images for validation")
     parser.add_argument("-w", "--model_path", help="Path to model JSON and weights")
     parser.add_argument("-s", "--img_dim", type=int, help="Dimension of input images for training (width, height)")
     parser.add_argument("-t", "--type", type=str, help="Type of model to use (regression, classification)")
-    parser.add_argument("-b", "--base_model", type=str, help="Base model to use in the NN model (resnet, mobile_net)")
+    parser.add_argument("-b", "--base_model", type=str, help="Base model to use in the NN model (MobileNetV2, ResNet50)")
     parser.add_argument("-l", "--load", default=False, type=bool, help="Load model from file")
     args = vars(parser.parse_args())
 
