@@ -24,6 +24,8 @@ def train_model():
     parser.add_argument("-v", "--test_sample_dir", help="Path to images for validation")
     parser.add_argument("-w", "--model_path", help="Path to model JSON and weights")
     parser.add_argument("-s", "--img_dim", type=int, help="Dimension of input images for training (width, height)")
+    parser.add_argument("-bs", "--batch_size", type=int, default=5, help="Size of batch to use for training")
+    parser.add_argument("-dev", "--age_deviation", type=int, default=5, help="Deviation in age vector")
     parser.add_argument("-t", "--type", type=str, help="Type of model to use (regression, classification)")
     parser.add_argument("-b", "--base_model", type=str, help="Base model to use in the NN model (MobileNetV2, ResNet50)")
     parser.add_argument("-l", "--load", default=False, type=bool, help="Load model from file")
@@ -45,7 +47,7 @@ def train_model():
         train_generator = DataGenerator(
             args,
             samples_directory=args["train_sample_dir"],
-            batch_size=10,
+            # batch_size=10,
             generator_type="train",
             basemodel_preprocess=age_model.preprocessing_function(),
             shuffle=True,
@@ -53,7 +55,7 @@ def train_model():
         validation_generator = DataGenerator(
             args,
             samples_directory=args["test_sample_dir"],
-            batch_size=10,
+            # batch_size=10,
             generator_type="test",
             basemodel_preprocess=age_model.preprocessing_function(),
             shuffle=False,

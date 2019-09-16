@@ -7,11 +7,14 @@ Age prediction project allows to use two base CNN models (ModelNetV2 and ResNet5
 
 Age prediction CNN is compatible with Python 3.6 and is distributed under the MIT license.
 
-## Installation (dev):
+## Requirements
 
-    # we need python3.5+
+    # Python3.5+
+    # Keras 2.2.5+
 
-    # create idtotal folder
+## Installation:
+
+    # create age_prediction_cnn folder
     mkdir age_prediction_cnn
     cd age_prediction_cnn
 
@@ -43,14 +46,17 @@ When you are going to train the age predictor you just need to run python.
     <base_model_name>
     --img_dim
     <img_dim>
+    --age_deviation
+    <age_deviation>
     --load
     True
 
-Here --type denotes the type of NN model and can have two values ("classification" and "regression"). When classification type chosen predictor builds a AGE vector represented as a normal probability histogram and Earth mover distance loss used. When regression type chosen predictor outputs single floating point value for age.
+Here --type denotes the type of NN model and can have two values ("classification" and "regression").
 Parameters --train_sample_dir and --test_sample_dir specify path to train and test datasets accordingly.
 --model_path specifies the path where model will be saved after training so predictor can load model from h5 file later.
 --base_model means CNN architecture used (two values: MobileNetV2 and ResNet50).
---img_dim means dimension of input images for training (width, height), e.g. 128.
+--img_dim means dimension of input images for training (width, height), 128 on default.
+--age_deviation specifies the deviation in age vector (in years), 5 on default
 Optional parameter --load means that trained model will be loaded from h5 file rather than trained from scratch.
 
 If you run the application in training mode you should see something like this:
@@ -81,8 +87,22 @@ If you run the application in loading mode you should see something like this:
     Predicted label: 99.9997615814209
     ...
 
+## Model training modes
+### Classification mode
+In classification mode chosen predictor builds a AGE vector represented as a histogram of a normal probability around the age value with deviation 5 years.
+
+![](_readme/images/age_vector.png)
+
+As loss and accuracy metrics [Earth mover's distance](https://en.wikipedia.org/wiki/Earth_mover%27s_distance) and [Mean Absolute Error](https://en.wikipedia.org/wiki/Mean_absolute_error) are used respectively.
+
+
+### Regression mode
+In regression mode chosen predictor outputs single floating point value in range 0 to 1.0 representing age. [Mean squared error](https://en.wikipedia.org/wiki/Mean_squared_error) is used a loss.
 
 ## Datasets
 This project uses this dataset to train the prediction model:
 
-[**WIKI**](https://data.vision.ee.ethz.ch/cvl/rrothe/imdb-wiki/)
+1. [**WIKI**](https://data.vision.ee.ethz.ch/cvl/rrothe/imdb-wiki/)
+2. [**UTKFace**](https://susanqq.github.io/UTKFace/)
+
+## References

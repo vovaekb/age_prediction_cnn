@@ -4,18 +4,17 @@ CLASSES_NUMBER = 100
 MAX_AGE = 100
 
 
-def build_age_vector(age):
+def build_age_vector(age, deviation):
     """Build AGE vector as a normal probability histogram"""
     # Sample from a normal distribution using numpy's random number generator
-    mean, std = age, 1
-    std_v = 5
-    bins_number = std_v * 2 + 1
-    samples = np.random.normal(mean, std, size=1000000)
+    mean, std = age, deviation / 5.0
+    bins_number = deviation * 2 + 1
+    samples = np.random.normal(mean, deviation, size=1000000)
 
     age_vec = np.zeros(shape=(MAX_AGE))
 
     # Compute a histogram of the sample
-    bins = np.linspace(mean - std_v - 1, mean + std_v - 1, bins_number)
+    bins = np.linspace(mean - deviation - 1, mean + deviation - 1, bins_number)
     histogram, bins = np.histogram(samples, bins=bins)
 
     # Get index of mean in histogram

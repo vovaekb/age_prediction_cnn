@@ -11,14 +11,15 @@ MAX_AGE = 100
 class DataGenerator(keras.utils.Sequence):
     """inherits from Keras Sequence base object"""
 
-    def __init__(self, args, samples_directory, batch_size, basemodel_preprocess, generator_type, shuffle):
+    def __init__(self, args, samples_directory, basemodel_preprocess, generator_type, shuffle):
         self.samples_directory = samples_directory
         self.model_type = args["type"]
         self.base_model = args["base_model"]
         self.basemodel_preprocess = basemodel_preprocess
-        self.batch_size = batch_size
+        self.batch_size = args["batch_size"]
         self.sample_files = []
         self.img_dims = (args["img_dim"], args["img_dim"])  # dimensions that images get resized into when loaded
+        self.age_deviation = args["age_deviation"]
         self.dataset_size = None
         self.generator_type = generator_type
         self.shuffle = shuffle
@@ -77,7 +78,7 @@ class DataGenerator(keras.utils.Sequence):
         # Save AGE label and image to training dataset
         if self.model_type == "classification":
             # Build AGE vector
-            age_vector = build_age_vector(age)
+            age_vector = build_age_vector(age, self.age_deviation)
             self.y[index,] = age_vector
         else:
             age = float(age / 100.0)
