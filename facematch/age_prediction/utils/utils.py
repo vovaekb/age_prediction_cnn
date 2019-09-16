@@ -9,7 +9,7 @@ def build_age_vector(age, deviation):
     # Sample from a normal distribution using numpy's random number generator
     mean, std = age, deviation / 5.0
     bins_number = deviation * 2 + 1
-    samples = np.random.normal(mean, deviation, size=1000000)
+    samples = np.random.normal(mean, std, size=1000000)
 
     age_vec = np.zeros(shape=(MAX_AGE))
 
@@ -30,6 +30,7 @@ def build_age_vector(age, deviation):
         histogram = histogram[: (MAX_AGE - (start_ind + histogram.shape[0]))]
 
     age_vec[start_ind:end_ind] = histogram
+    print(age_vec)
 
     # Normalize age histogram
     age_vec = age_vec / age_vec.sum()
