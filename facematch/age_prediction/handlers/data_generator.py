@@ -2,9 +2,11 @@ import os
 import cv2
 import numpy as np
 import keras
+from keras.utils import to_categorical
 from facematch.age_prediction.utils.utils import build_age_vector
 
 CLASSES_NUMBER = 100
+GENDERS_NUMBER = 2
 MAX_AGE = 100
 
 
@@ -20,9 +22,12 @@ class DataGenerator(keras.utils.Sequence):
         self.sample_files = []
         self.img_dims = (args["img_dim"], args["img_dim"])  # dimensions that images get resized into when loaded
         self.age_deviation = args["age_deviation"]
+        self.predict_gender = args['predict_gender'] if 'predict_gender' in args else False
         self.dataset_size = None
         self.generator_type = generator_type
         self.shuffle = shuffle
+
+        print(f'Predict gender: {self.predict_gender}')
 
         self.load_sample_files()
         self.indexes = np.arange(self.dataset_size)
@@ -37,7 +42,10 @@ class DataGenerator(keras.utils.Sequence):
         batch_samples = [self.sample_files[i] for i in batch_indexes]
 
         self.__data_generator(batch_samples)
-        return self.X, self.y
+        if not self.predict_gender:
+            return self.X, self.y_age
+        else:
+            return self.X, [self.y_age, self.y_gender]
 
     def on_epoch_end(self):
         self.indexes = np.arange(self.dataset_size)
@@ -49,12 +57,18 @@ class DataGenerator(keras.utils.Sequence):
         self.X = np.empty((self.batch_size, *self.img_dims, 3))
 
         if self.model_type == "classification":
-            self.y = np.empty((self.batch_size, CLASSES_NUMBER))
+            self.y_age = np.empty((self.batch_size, CLASSES_NUMBER))
         else:
-            self.y = np.empty((self.batch_size, 1))
+            self.y_age = np.empty((self.batch_size, 1))
+
+        if self.predict_gender:
+            self.y_gender = np.empty((self.batch_size, GENDERS_NUMBER))
 
         for i, file in enumerate(batch_samples):
             self.process_file(file, i)
+
+        # print(f'y_gender.shape: {self.y_gender.shape}')
+
 
     def process_file(self, file, index):
         # Load image
@@ -79,10 +93,15 @@ class DataGenerator(keras.utils.Sequence):
         if self.model_type == "classification":
             # Build AGE vector
             age_vector = build_age_vector(age, self.age_deviation)
-            self.y[index,] = age_vector
+            self.y_age[index,] = age_vector
         else:
             age = float(age / 100.0)
-            self.y[index] = age
+            self.y_age[index] = age
+
+        if self.predict_gender:
+            gender = int(file_name.split("_")[2])
+            # TODO: apply label encoding (0 -> [1, 0])
+            self.y_gender[index] = to_categorical(gender, 2)
 
     def load_sample_files(self):
         """

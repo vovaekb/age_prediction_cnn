@@ -17,20 +17,21 @@ def build_age_vector(age, deviation):
     bins = np.linspace(mean - deviation - 1, mean + deviation - 1, bins_number)
     histogram, bins = np.histogram(samples, bins=bins)
 
-    # Get index of mean in histogram
+    # Get index of mean in histogram and start / end of histogram in AGE vector
     mean_ind = np.where(histogram == np.amax(histogram))[0][0]
-    start_ind = max(0, (mean - mean_ind))
+    start_ind = mean - mean_ind
+    end_ind = start_ind + histogram.shape[0]
 
-    end_ind = min(MAX_AGE, start_ind + histogram.shape[0])
+    # handle borders of the probability distribution range falling outside the main range [0..100]
+    if start_ind < 0:
+        histogram = histogram[abs(start_ind) :]
 
-    if mean - mean_ind < 0:
-        histogram = histogram[abs(mean - mean_ind) :]
+    if end_ind > MAX_AGE:
+        histogram = histogram[: (MAX_AGE - (end_ind))]
 
-    if start_ind + histogram.shape[0] > MAX_AGE:
-        histogram = histogram[: (MAX_AGE - (start_ind + histogram.shape[0]))]
-
+    end_ind = min(MAX_AGE, end_ind)
+    start_ind = max(0, start_ind)
     age_vec[start_ind:end_ind] = histogram
-    print(age_vec)
 
     # Normalize age histogram
     age_vec = age_vec / age_vec.sum()

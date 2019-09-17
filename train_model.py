@@ -29,6 +29,7 @@ def train_model():
     parser.add_argument("-t", "--type", type=str, help="Type of model to use (regression, classification)")
     parser.add_argument("-b", "--base_model", type=str, help="Base model to use in the NN model (MobileNetV2, ResNet50)")
     parser.add_argument("-l", "--load", default=False, type=bool, help="Load model from file")
+    parser.add_argument("-gnd", "--predict_gender", default=False, type=bool, help="Apply gender prediction")
     args = vars(parser.parse_args())
 
     img_dim = args["img_dim"]
@@ -36,10 +37,10 @@ def train_model():
     print("Initializing CNN model ...")
 
     if args["type"] == "classification":
-        age_model = AgeClassificationNet(args["base_model"], IMG_SHAPE)
+        age_model = AgeClassificationNet(args["base_model"], IMG_SHAPE, args['predict_gender'] if 'predict_gender' in args else False)
     else:
         # REGRESSION MODEL
-        age_model = AgeRegressionNet(args["base_model"], IMG_SHAPE)
+        age_model = AgeRegressionNet(args["base_model"], IMG_SHAPE, args['predict_gender'] if 'predict_gender' in args else False)
 
     if not args["load"]:
         age_model.build()
@@ -80,10 +81,11 @@ def train_model():
         model_file = os.path.join(args["model_path"], "model.h5")
         age_model.model = load_model(model_file)
 
-        image_files = [f for f in os.listdir(args["test_sample_dir"])]  # train_sample_dir
+        image_files = [f for f in os.listdir(args["test_sample_dir"])]
 
         for file in image_files:
-            file_path = os.path.join(args["test_sample_dir"], file)  # train_sample_dir
+            file_path = os.path.join(args["test_sample_dir"], file)
+            print(f'\nPredicting for image {file}')
 
             image = cv2.imread(file_path)
             image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
@@ -95,16 +97,21 @@ def train_model():
 
             file_name = os.path.splitext(file)[0]
             true_age = int(file_name.split("_")[1])
-            print(f"True label: {true_age}")
 
+            prediction = age_model.model.predict(image)
             if args["type"] == "classification":
-                prediction = age_model.model.predict(image)
-
                 mean_ind = np.where(prediction[0] == np.amax(prediction[0]))[0][0]
-                print(f"Predicted label: {mean_ind}")
+                print(f"Predicted age: {mean_ind}, true age: {true_age}")
             else:
-                prediction = age_model.model.predict(image)
-                print(f"Predicted label: {prediction[0][0]*100}")
+                print(f"Predicted age: {prediction[0][0]*100}, true age: {true_age}")
+
+            if 'predict_gender' in args:
+                true_gender_index = int(file_name.split("_")[2])
+                true_gender = 'M' if true_gender_index == 0 else 'F'
+
+                max_ind = np.where(prediction[1][0] == np.amax(prediction[1][0]))[0][0]
+                gender = 'M' if max_ind == 0 else 'F'
+                print(f"Predicted gender: {gender}, true gender: {true_gender}")
 
 
 if __name__ == "__main__":
