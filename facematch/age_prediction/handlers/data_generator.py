@@ -27,8 +27,6 @@ class DataGenerator(keras.utils.Sequence):
         self.generator_type = generator_type
         self.shuffle = shuffle
 
-        print(f'Predict gender: {self.predict_gender}')
-
         self.load_sample_files()
         self.indexes = np.arange(self.dataset_size)
 
@@ -66,9 +64,6 @@ class DataGenerator(keras.utils.Sequence):
 
         for i, file in enumerate(batch_samples):
             self.process_file(file, i)
-
-        # print(f'y_gender.shape: {self.y_gender.shape}')
-
 
     def process_file(self, file, index):
         # Load image

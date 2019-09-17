@@ -105,7 +105,7 @@ def train_model():
             else:
                 print(f"Predicted age: {prediction[0][0]*100}, true age: {true_age}")
 
-            if 'predict_gender' in args:
+            if 'predict_gender' in args and args['predict_gender']:
                 true_gender_index = int(file_name.split("_")[2])
                 true_gender = 'M' if true_gender_index == 0 else 'F'
 
