@@ -3,5 +3,5 @@ numpy
 sklearn
 opencv-contrib-python-headless>4
 tensorflow
-requests
 importlib
+imgaug

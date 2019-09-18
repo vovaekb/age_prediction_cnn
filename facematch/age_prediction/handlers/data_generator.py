@@ -4,9 +4,9 @@ import numpy as np
 import keras
 from keras.utils import to_categorical
 from imgaug import augmenters as iaa
-from facematch.age_prediction.utils.utils import build_age_vector
+from facematch.age_prediction.utils.utils import build_age_vector, age_ranges_number, get_age_range_index
 
-CLASSES_NUMBER = 100
+AGES_NUMBER = 100
 GENDERS_NUMBER = 2
 MAX_AGE = 100
 
@@ -24,6 +24,8 @@ class DataGenerator(keras.utils.Sequence):
         self.img_dims = (args["img_dim"], args["img_dim"])  # dimensions that images get resized into when loaded
         self.age_deviation = args["age_deviation"]
         self.predict_gender = args["predict_gender"] if "predict_gender" in args else False
+        self.range_mode = args["range_mode"] if "range_mode" in args else False
+        self.age_classes_number = age_ranges_number() if self.range_mode else AGES_NUMBER
         self.dataset_size = None
         self.generator_type = generator_type
         self.shuffle = shuffle
@@ -43,8 +45,6 @@ class DataGenerator(keras.utils.Sequence):
         self.__data_generator(batch_samples)
 
         self.X = self.augmentor(self.X)
-        print(self.X.shape)
-        print(self.y_age.shape)
         if not self.predict_gender:
             return self.X, self.y_age
         else:
@@ -60,7 +60,7 @@ class DataGenerator(keras.utils.Sequence):
         self.X = np.empty((self.batch_size, *self.img_dims, 3))
 
         if self.model_type == "classification":
-            self.y_age = np.empty((self.batch_size, CLASSES_NUMBER))
+            self.y_age = np.empty((self.batch_size, self.age_classes_number))
         else:
             self.y_age = np.empty((self.batch_size, 1))
 
@@ -95,24 +95,30 @@ class DataGenerator(keras.utils.Sequence):
         # Obtain age
         file_name = os.path.splitext(file)[0]
         age = int(file_name.split("_")[1])
+        age = min(age, MAX_AGE)
 
         # Save AGE label and image to training dataset
         if self.model_type == "classification":
-            # Build AGE vector
-            age_vector = build_age_vector(age, self.age_deviation)
-            self.y_age[index,] = age_vector
+            if self.range_mode:
+                range_index = get_age_range_index(age)
+                # transform label to categorical vector
+                self.y_age[index,] = to_categorical(range_index, self.age_classes_number)
+            else:
+                # Build AGE vector
+                age_vector = build_age_vector(age, self.age_deviation)
+                self.y_age[index,] = age_vector
         else:
-            age = float(age / 100.0)
+            age = float(age / MAX_AGE)
             self.y_age[index] = age
 
         if self.predict_gender:
-            gender = int(file_name.split("_")[2])
-            # TODO: apply label encoding (0 -> [1, 0])
-            self.y_gender[index] = to_categorical(gender, 2)
+            gender = int(file_name.split("_")[GENDERS_NUMBER])
+            # transform label to categorical vector
+            self.y_gender[index] = to_categorical(gender, GENDERS_NUMBER)
 
     def load_sample_files(self):
         """
-        Processes batch of samples sending API requests with every sample one by one
+        Loads file names of training samples
         :return:
         """
         self.sample_files = [

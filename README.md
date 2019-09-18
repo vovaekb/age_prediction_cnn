@@ -1,9 +1,9 @@
 Age prediction CNN Project
 --------------------
 
-This repository provides an implementation of person age prediction from image of face using CNN models.
+This repository provides an implementation of age prediction from images of faces using CNN models.
 
-Age prediction project allows to use two base CNN models (ModelNetV2 and ResNet50) from [Keras](https://keras.io/applications/). The models are trained via transfer learning, where ImageNet pre-trained CNNs are used and fine-tuned for the classification task.
+Age prediction project allows to use two base CNN models (MobileNetV2 and ResNet50) from [Keras](https://keras.io/applications/). The models are trained via transfer learning, where ImageNet pre-trained CNNs are used and fine-tuned for the classification task.
 
 Age prediction CNN is compatible with Python 3.6 and is distributed under the MIT license.
 
@@ -31,34 +31,14 @@ You can use [UTKFace](https://susanqq.github.io/UTKFace/). This dataset was used
 For UTKFace dataset you can use the script transform_dataset_names.py in root folder of the project. This script allows to prepare face crops in required format.
 To run this script:
 
-    --sample_dir
-    <path_to_utkface_data>
-    --output_dir
-    <path_to_save_utkface_training_dataset>
+    python transform_dataset_names.py --sample_dir <path_to_utkface_data> --output_dir <path_to_save_utkface_training_dataset>
 
 
 ## Running applications
 
 When you are going to train the age predictor you just need to run python.
 
-    python train_model.py --type
-    <model_type>
-    --train_sample_dir
-    <train_sample_dir>
-    --test_sample_dir
-    <test_sample_dir>
-    --model_path
-    <model_path>
-    --base_model
-    <base_model_name>
-    --img_dim
-    <img_dim>
-    --age_deviation
-    <age_deviation>
-    --load
-    True
-    --predict_gender
-    True
+    python train_model.py --type <model_type> --range_mode True --train_sample_dir <train_sample_dir> --test_sample_dir <test_sample_dir> --model_path <model_path> --base_model <base_model_name> --img_dim <img_dim> --age_deviation <age_deviation> --load True --predict_gender True
 
 Here **--type** denotes the type of NN model and can have two values ("classification" and "regression").
 
@@ -109,18 +89,53 @@ If you run the application with gender classification turned on you should see s
 
 ## Model training modes for age
 ### Classification mode
-In classification mode chosen predictor builds a AGE vector represented as a histogram of a normal probability around the age value with deviation 5 years.
+Unlike regular image classification age prediction should not be strictly discriminative. In this case soft decision making can be applied through predicting histogram of normal probability around the age value. Here we build a AGE vector represented as a histogram of a normal probability with mean in the age value with deviation 5 years. This is inspired by image aesthetics quantification problem.
+
 
 ![](_readme/images/age_vector.png)
 
-As loss and accuracy metrics [Earth mover's distance](https://en.wikipedia.org/wiki/Earth_mover%27s_distance) and [Mean Absolute Error](https://en.wikipedia.org/wiki/Mean_absolute_error) are used respectively.
+We have no statistic data about ages so AGE vectors were generated manually. For generating AGE vectors we used method build_age_vector() in script utils.py locating in folder facematch/age_prediction/utils.
 
+In the CNN model output layer is represented by a fully connected layer with 100 nodes and softmax activation.
+
+As loss and accuracy metrics [Earth mover's distance](https://en.wikipedia.org/wiki/Earth_mover%27s_distance) and [Mean Absolute Error](https://en.wikipedia.org/wiki/Mean_absolute_error) are used respectively. Earth mover's distance measures the histogram similarity.
+
+To run training in age classification mode use command:
+
+    python train_model.py --type classification <options>
+
+To run loading model from file and predicting age:
+
+    python train_model.py --type classification <options> --load True
+
+### Range classification mode
+We also predict a range the age belongs to from following ranges: 0-5,5-10,10-15,15-20,20-25,25-30,...,75-80,80+. Here we use regular classification model where each class is represented by an age range.
+
+To run training in age classification mode use command:
+
+    python train_model.py --type classification --range_mode True <options>
+    
+To run loading model from file and predicting age use command with option --load True.
 
 ### Regression mode
 In regression mode chosen predictor outputs single floating point value in range 0 to 1.0 representing age. [Mean squared error](https://en.wikipedia.org/wiki/Mean_squared_error) is used as loss.
+In regression model output layer is represented by a fully connected layer with the only node and linear activation.
+
+We applied scaling target age values to range [0, 1] and multiplying predictions by 100 when presenting results to user as it gives better accuracy results.
+
+To run training in age classification mode use command:
+
+    python train_model.py --type regression <options>
+
+To run loading model from file and predicting age use command with option --load True.
 
 ## Gender classification
-We also apply gender classification of a person on image. You can include this option using parameter --gender.
+We also apply gender classification of a person on image. You can include this option using parameter --predict_gender:
+
+    python train_model.py --type <model_type> <options> --predict_gender True
+
+To run loading model from file and predicting age and gender use command with option --load True.
+
 
 ## Datasets
 This project uses this dataset to train the prediction model:
@@ -128,5 +143,13 @@ This project uses this dataset to train the prediction model:
 [**UTKFace**](https://susanqq.github.io/UTKFace/)
 
 ## References
+1. Abhimanyu Dubey, Otkrist Gupta, Ramesh Raskar, Nikhil Naik. "Maximum-Entropy Fine-Grained Classification." Proceedings of the 32Nd International Conference on Neural Information Processing Systems (2018).
+2. Talebi, Hossein, and Peyman Milanfar. "NIMA: Neural Image Assessment."
+    IEEE Transactions on Image Processing (2018).
+3. Mark Sandler, Andrew Howard, Menglong Zhu, Andrey Zhmoginov, Liang-Chieh Chen. "MobileNetV2: Inverted Residuals and Linear Bottlenecks." The IEEE Conference on Computer Vision and Pattern Recognition (CVPR), 2018
+4. Kaiming He, Xiangyu Zhang, Shaoqing Ren, Jian Sun. "Deep Residual Learning for Image Recognition." 2016 IEEE Conference on Computer Vision and Pattern Recognition (CVPR)
+5. [Keras, Regression, and CNNs](https://www.pyimagesearch.com/2019/01/28/keras-regression-and-cnns/)
 
-[Keras, Regression, and CNNs](https://www.pyimagesearch.com/2019/01/28/keras-regression-and-cnns/)
+## Copyright
+
+See [LICENSE](LICENSE) for details.

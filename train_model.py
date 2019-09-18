@@ -3,15 +3,13 @@ import cv2
 import numpy as np
 import argparse
 from facematch.age_prediction.handlers.data_generator import DataGenerator
-from keras.models import model_from_json
 from keras.models import load_model
 from keras.utils.generic_utils import get_custom_objects
 from facematch.age_prediction.models.age_classification_net import AgeClassificationNet
 from facematch.age_prediction.models.age_regression_net import AgeRegressionNet
 from facematch.age_prediction.utils.metrics import earth_movers_distance, age_mae
-from facematch.age_prediction.utils.utils import build_age_vector
+from facematch.age_prediction.utils.utils import get_range
 
-IMG_SHAPE = (128, 128, 3)
 EPOCHS = 13
 
 parser = argparse.ArgumentParser()
@@ -26,8 +24,17 @@ def train_model():
     parser.add_argument("-s", "--img_dim", type=int, help="Dimension of input images for training (width, height)")
     parser.add_argument("-bs", "--batch_size", type=int, default=5, help="Size of batch to use for training")
     parser.add_argument("-dev", "--age_deviation", type=int, default=5, help="Deviation in age vector")
-    parser.add_argument("-t", "--type", type=str, help="Type of model to use (regression, classification)")
-    parser.add_argument("-b", "--base_model", type=str, help="Base model to use in the NN model (MobileNetV2, ResNet50)")
+    parser.add_argument("-t", "--type", type=str, help="Type of model to use (regression, classification)")  #
+    parser.add_argument(
+        "-rm",
+        "--range_mode",
+        default=False,
+        type=bool,
+        help="Run age prediction in range mode (age prediction in ranges like 0 - 5, 6 - 10 etc). If not set run in age vector mode (normal probability histogram)",
+    )
+    parser.add_argument(
+        "-b", "--base_model", type=str, help="Base model to use in the NN model (MobileNetV2, ResNet50)"
+    )
     parser.add_argument("-l", "--load", default=False, type=bool, help="Load model from file")
     parser.add_argument("-gnd", "--predict_gender", default=False, type=bool, help="Apply gender prediction")
     args = vars(parser.parse_args())
@@ -37,10 +44,12 @@ def train_model():
     print("Initializing CNN model ...")
 
     if args["type"] == "classification":
-        age_model = AgeClassificationNet(args["base_model"], IMG_SHAPE, args['predict_gender'] if 'predict_gender' in args else False)
+        age_model = AgeClassificationNet(args["base_model"], (img_dim, img_dim, 3), args["range_mode"], args["predict_gender"])
     else:
-        # REGRESSION MODEL
-        age_model = AgeRegressionNet(args["base_model"], IMG_SHAPE, args['predict_gender'] if 'predict_gender' in args else False)
+        # Regression model
+        age_model = AgeRegressionNet(
+            args["base_model"], (img_dim, img_dim, 3), args["predict_gender"]
+        )
 
     if not args["load"]:
         age_model.build()
@@ -48,7 +57,6 @@ def train_model():
         train_generator = DataGenerator(
             args,
             samples_directory=args["train_sample_dir"],
-            # batch_size=10,
             generator_type="train",
             basemodel_preprocess=age_model.preprocessing_function(),
             shuffle=True,
@@ -56,7 +64,6 @@ def train_model():
         validation_generator = DataGenerator(
             args,
             samples_directory=args["test_sample_dir"],
-            # batch_size=10,
             generator_type="test",
             basemodel_preprocess=age_model.preprocessing_function(),
             shuffle=False,
@@ -85,7 +92,7 @@ def train_model():
 
         for file in image_files:
             file_path = os.path.join(args["test_sample_dir"], file)
-            print(f'\nPredicting for image {file}')
+            print(f"\nPredicting for image {file}")
 
             image = cv2.imread(file_path)
             image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
@@ -100,17 +107,31 @@ def train_model():
 
             prediction = age_model.model.predict(image)
             if args["type"] == "classification":
-                mean_ind = np.where(prediction[0] == np.amax(prediction[0]))[0][0]
-                print(f"Predicted age: {mean_ind}, true age: {true_age}")
+                if args["range_mode"]:
+                    predict_age_index = np.where(prediction[0] == np.amax(prediction[0]))[0][0]
+                    # transform range index to range
+                    (range_start, range_end) = get_range(predict_age_index)
+                    if range_end is None:
+                        predicted_range = f"{range_start}+"
+                    else:
+                        predicted_range = f"({range_start}, {range_end})"
+                    print(f"Predicted age range: {predicted_range}, true age: {true_age}")
+                else:
+                    mean_ind = np.where(prediction[0] == np.amax(prediction[0]))[0][0]
+                    print(f"Predicted age: {mean_ind}, true age: {true_age}")
             else:
-                print(f"Predicted age: {prediction[0][0]*100}, true age: {true_age}")
+                # Regression mode
+                if not args["predict_gender"]:
+                    print(f"Predicted age: {prediction[0][0]*100}, true age: {true_age}")
+                else:
+                    print(f"Predicted age: {prediction[0][0][0]*100}, true age: {true_age}")
 
-            if 'predict_gender' in args and args['predict_gender']:
+            if "predict_gender" in args and args["predict_gender"]:
                 true_gender_index = int(file_name.split("_")[2])
-                true_gender = 'M' if true_gender_index == 0 else 'F'
+                true_gender = "M" if true_gender_index == 0 else "F"
 
                 max_ind = np.where(prediction[1][0] == np.amax(prediction[1][0]))[0][0]
-                gender = 'M' if max_ind == 0 else 'F'
+                gender = "M" if max_ind == 0 else "F"
                 print(f"Predicted gender: {gender}, true gender: {true_gender}")
 
 

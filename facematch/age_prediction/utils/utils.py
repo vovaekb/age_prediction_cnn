@@ -2,6 +2,8 @@ import numpy as np
 
 CLASSES_NUMBER = 100
 MAX_AGE = 100
+RANGE_LENGTH = 5
+AGE_RANGES_UPPER_THRESH = 80
 
 
 def build_age_vector(age, deviation):
@@ -36,3 +38,23 @@ def build_age_vector(age, deviation):
     # Normalize age histogram
     age_vec = age_vec / age_vec.sum()
     return age_vec
+
+
+def age_ranges_number():
+    """Calculates total number of classes for age range mode"""
+    return int(AGE_RANGES_UPPER_THRESH / RANGE_LENGTH) + 1
+
+
+def get_age_range_index(age):
+    """Calculates index of 5-year age range for specified age value"""
+    age = min(age, AGE_RANGES_UPPER_THRESH)
+
+    return int(age / RANGE_LENGTH)
+
+
+def get_range(index):
+    """Returns range for given index"""
+    if index == age_ranges_number() - 1:
+        return (RANGE_LENGTH * index, None)
+
+    return (RANGE_LENGTH * index, RANGE_LENGTH * (index + 1))
