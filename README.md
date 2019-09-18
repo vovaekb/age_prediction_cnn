@@ -24,11 +24,18 @@ Age prediction CNN is compatible with Python 3.6 and is distributed under the MI
 ## Preparing data
 Use some preprocessing script to crop out faces in images and obtain a person age. You should have a batch of image files with faces named in following format:
 
-    <id>_<age>.jpg
+    <id>_<age>_<gender>.jpg
 
-You can use [WIKI dataset](https://data.vision.ee.ethz.ch/cvl/rrothe/imdb-wiki/). This dataset was used to train models in the Age prediction CNN.
+You can use [UTKFace](https://susanqq.github.io/UTKFace/). This dataset was used to train models in the Age prediction CNN. UTKFace dataset provides labels for both age and gender.
 
-For face detection you can use [Ximilar face detector API](https://docs.ximilar.com/services/face_detection/).
+For UTKFace dataset you can use the script transform_dataset_names.py in root folder of the project. This script allows to prepare face crops in required format.
+To run this script:
+
+    --sample_dir
+    <path_to_utkface_data>
+    --output_dir
+    <path_to_save_utkface_training_dataset>
+
 
 ## Running applications
 
@@ -50,14 +57,27 @@ When you are going to train the age predictor you just need to run python.
     <age_deviation>
     --load
     True
+    --predict_gender
+    True
 
-Here --type denotes the type of NN model and can have two values ("classification" and "regression").
-Parameters --train_sample_dir and --test_sample_dir specify path to train and test datasets accordingly.
---model_path specifies the path where model will be saved after training so predictor can load model from h5 file later.
---base_model means CNN architecture used (two values: MobileNetV2 and ResNet50).
---img_dim means dimension of input images for training (width, height), 128 on default.
---age_deviation specifies the deviation in age vector (in years), 5 on default
-Optional parameter --load means that trained model will be loaded from h5 file rather than trained from scratch.
+Here **--type** denotes the type of NN model and can have two values ("classification" and "regression").
+
+Parameters **--train_sample_dir** and **--test_sample_dir** specify path to train and test datasets accordingly.
+
+**--model_path** specifies the path where model will be saved after training so predictor can load model from h5 file later.
+
+**--base_model** means CNN architecture used (two values: MobileNetV2 and ResNet50).
+
+**--img_dim** means dimension of input images for training (width, height), 128 on default.
+
+**--age_deviation** specifies the deviation in age vector (in years), 5 on default
+
+Optional parameters:
+
+**--load means** that trained model will be loaded from h5 file rather than trained from scratch.
+
+**--predict_gender** allows to apply gender classification in addition to age prediction.
+
 
 If you run the application in training mode you should see something like this:
 
@@ -69,11 +89,9 @@ If you run the application in training mode you should see something like this:
     1/2 [==============>...............] - ETA: 8s - loss: 0.0947
     2/2 [==============================] - 13s 6s/step - loss: 0.0668 - val_loss: 0.1144
     Epoch 2/13
-
-    1/2 [==============>...............] - ETA: 1s - loss: 0.1524
-    2/2 [==============================] - 6s 3s/step - loss: 0.1755 - val_loss: 0.1844
-    Epoch 3/13
     ...
+
+If you run the application with gender classification turned in you should see similar output with accuracy and loss for both age and gender.
 
 Training accuracy and loss as well as validation accuracy will be printed in terminal.
 
@@ -81,13 +99,15 @@ If you run the application in loading mode you should see something like this:
 
     Using TensorFlow backend.
     Initializing CNN model ...
-    True label: 48
-    Predicted label: 8.177467435598373
-    True label: 70
-    Predicted label: 99.9997615814209
+    
+    Predicting for image 20170110224238891_10_0.jpg
+    Predicted age: 0, true age: 10
+    Predicted gender: M, true gender: M
     ...
 
-## Model training modes
+If you run the application with gender classification turned on you should see similar output with predictions for both age and gender.
+
+## Model training modes for age
 ### Classification mode
 In classification mode chosen predictor builds a AGE vector represented as a histogram of a normal probability around the age value with deviation 5 years.
 
@@ -97,12 +117,16 @@ As loss and accuracy metrics [Earth mover's distance](https://en.wikipedia.org/w
 
 
 ### Regression mode
-In regression mode chosen predictor outputs single floating point value in range 0 to 1.0 representing age. [Mean squared error](https://en.wikipedia.org/wiki/Mean_squared_error) is used a loss.
+In regression mode chosen predictor outputs single floating point value in range 0 to 1.0 representing age. [Mean squared error](https://en.wikipedia.org/wiki/Mean_squared_error) is used as loss.
+
+## Gender classification
+We also apply gender classification of a person on image. You can include this option using parameter --gender.
 
 ## Datasets
 This project uses this dataset to train the prediction model:
 
-1. [**WIKI**](https://data.vision.ee.ethz.ch/cvl/rrothe/imdb-wiki/)
-2. [**UTKFace**](https://susanqq.github.io/UTKFace/)
+[**UTKFace**](https://susanqq.github.io/UTKFace/)
 
 ## References
+
+[Keras, Regression, and CNNs](https://www.pyimagesearch.com/2019/01/28/keras-regression-and-cnns/)

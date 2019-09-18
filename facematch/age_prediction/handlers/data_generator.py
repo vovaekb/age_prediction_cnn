@@ -3,6 +3,7 @@ import cv2
 import numpy as np
 import keras
 from keras.utils import to_categorical
+from imgaug import augmenters as iaa
 from facematch.age_prediction.utils.utils import build_age_vector
 
 CLASSES_NUMBER = 100
@@ -22,7 +23,7 @@ class DataGenerator(keras.utils.Sequence):
         self.sample_files = []
         self.img_dims = (args["img_dim"], args["img_dim"])  # dimensions that images get resized into when loaded
         self.age_deviation = args["age_deviation"]
-        self.predict_gender = args['predict_gender'] if 'predict_gender' in args else False
+        self.predict_gender = args["predict_gender"] if "predict_gender" in args else False
         self.dataset_size = None
         self.generator_type = generator_type
         self.shuffle = shuffle
@@ -40,6 +41,10 @@ class DataGenerator(keras.utils.Sequence):
         batch_samples = [self.sample_files[i] for i in batch_indexes]
 
         self.__data_generator(batch_samples)
+
+        self.X = self.augmentor(self.X)
+        print(self.X.shape)
+        print(self.y_age.shape)
         if not self.predict_gender:
             return self.X, self.y_age
         else:
@@ -64,6 +69,13 @@ class DataGenerator(keras.utils.Sequence):
 
         for i, file in enumerate(batch_samples):
             self.process_file(file, i)
+
+    def augmentor(self, images):
+        "Apply data augmentation"
+        seq = iaa.Sequential(
+            [iaa.Fliplr(0.5), iaa.GaussianBlur((0, 0.5))], random_order=True  # horizontally flip 50% of all images
+        )
+        return seq.augment_images(images)
 
     def process_file(self, file, index):
         # Load image
