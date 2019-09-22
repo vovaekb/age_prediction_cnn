@@ -1,6 +1,6 @@
 import importlib
 from keras.models import Model
-from keras.optimizers import Adam
+from keras.optimizers import Adam, SGD
 from keras.layers import Dense, GlobalAveragePooling2D
 from keras.applications.mobilenet_v2 import MobileNetV2
 from keras.applications.resnet50 import ResNet50
@@ -17,20 +17,20 @@ RESNET_MODEL_NAME = "ResNet50"
 
 
 class AgeClassificationNet:
-    def __init__(self, base_model, img_shape, range_mode=False, predict_gender=False):
-        self.base_model = base_model
+    def __init__(self, base_model_name, img_shape, range_mode=False, predict_gender=False):
+        self.base_model_name = base_model_name
         self.img_shape = img_shape
         self.range_mode = range_mode
         self.predict_gender = predict_gender
         self._get_base_module()
 
     def build(self):
-        if self.base_model == MOBILENET_MODEL_NAME:
-            base_model = MobileNetV2(input_shape=self.img_shape, include_top=False, weights="imagenet")
-        elif self.base_model == RESNET_MODEL_NAME:
-            base_model = ResNet50(input_shape=self.img_shape, include_top=False, weights="imagenet")
+        if self.base_model_name == MOBILENET_MODEL_NAME:
+            self.base_model = MobileNetV2(input_shape=self.img_shape, include_top=False, weights="imagenet")
+        elif self.base_model_name == RESNET_MODEL_NAME:
+            self.base_model = ResNet50(input_shape=self.img_shape, include_top=False, weights="imagenet")
 
-        x = base_model.output
+        x = self.base_model.output
         x = GlobalAveragePooling2D()(x)
 
         if self.range_mode:
@@ -40,16 +40,20 @@ class AgeClassificationNet:
             age_output = Dense(units=AGES_NUMBER, activation="softmax", name="age_output")(x)
 
         if not self.predict_gender:
-            self.model = Model(inputs=base_model.input, outputs=age_output)
+            self.model = Model(inputs=self.base_model.input, outputs=age_output)
         else:
             gender_output = Dense(units=GENDERS_NUMBER, activation="softmax", name="gender_output")(x)
-            self.model = Model(inputs=base_model.input, outputs=[age_output, gender_output])
+            self.model = Model(inputs=self.base_model.input, outputs=[age_output, gender_output])
+
+        # list indices of base model layers
+        # for i, layer in enumerate(self.base_model.layers):
+        #     print("{} {}".format(i, layer.__class__.__name__))
 
     def _get_base_module(self):
         # import Keras base model module
-        if self.base_model == MOBILENET_MODEL_NAME:
+        if self.base_model_name == MOBILENET_MODEL_NAME:
             self.base_module = importlib.import_module("keras.applications.mobilenet_v2")
-        elif self.base_model == RESNET_MODEL_NAME:
+        elif self.base_model_name == RESNET_MODEL_NAME:
             self.base_module = importlib.import_module("keras.applications.resnet50")
 
     def compile(self):
@@ -69,6 +73,7 @@ class AgeClassificationNet:
             self.model.compile(
                 optimizer=optimizer,
                 loss={"age_output": age_loss, "gender_output": "categorical_crossentropy"},
+                loss_weights={"age_output": 1.0, "gender_output": 1.0},
                 metrics={"age_output": age_metrics, "gender_output": "accuracy"},
             )
 

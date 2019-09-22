@@ -5,6 +5,7 @@ import argparse
 from facematch.age_prediction.handlers.data_generator import DataGenerator
 from keras.models import load_model
 from keras.utils.generic_utils import get_custom_objects
+from keras.callbacks import ReduceLROnPlateau
 from facematch.age_prediction.models.age_classification_net import AgeClassificationNet
 from facematch.age_prediction.models.age_regression_net import AgeRegressionNet
 from facematch.age_prediction.utils.metrics import earth_movers_distance, age_mae
@@ -37,6 +38,7 @@ def train_model():
     )
     parser.add_argument("-l", "--load", default=False, type=bool, help="Load model from file")
     parser.add_argument("-gnd", "--predict_gender", default=False, type=bool, help="Apply gender prediction")
+    parser.add_argument("-ft", "--fine_tuning", default=False, type=bool, help="Apply fine tuning to model")
     args = vars(parser.parse_args())
 
     img_dim = args["img_dim"]
@@ -44,15 +46,16 @@ def train_model():
     print("Initializing CNN model ...")
 
     if args["type"] == "classification":
-        age_model = AgeClassificationNet(args["base_model"], (img_dim, img_dim, 3), args["range_mode"], args["predict_gender"])
+        age_model = AgeClassificationNet(
+            args["base_model"], (img_dim, img_dim, 3), args["range_mode"], args["predict_gender"]
+        )
     else:
         # Regression model
-        age_model = AgeRegressionNet(
-            args["base_model"], (img_dim, img_dim, 3), args["predict_gender"]
-        )
+        age_model = AgeRegressionNet(args["base_model"], (img_dim, img_dim, 3), args["predict_gender"])
 
     if not args["load"]:
         age_model.build()
+        # age_model.model.summary()
 
         train_generator = DataGenerator(
             args,
@@ -69,15 +72,54 @@ def train_model():
             shuffle=False,
         )
 
+        # freeze the base model
+        for layer in age_model.base_model.layers:
+            layer.trainable = False
+
         # Compile model
         age_model.compile()
 
         # Fit generator and start training
         print("Starting training ...")
 
-        # Train without loop and prediction monitoring
+        # Apply learning rate schedules
+        reduce_lr = ReduceLROnPlateau(monitor="val_loss", factor=0.2, patience=5, min_lr=0.001)
+
+        # add the learning rate schedule to the list of callbacks
+        callbacks = [reduce_lr]
+
+        # Applying fine tuning
+        if args["fine_tuning"]:
+            # Train without loop and prediction monitoring
+            age_model.model.fit_generator(
+                generator=train_generator,
+                validation_data=validation_generator,
+                epochs=10,
+                callbacks=callbacks,
+                verbose=1,
+            )
+
+            # unfreeze the final set of CONV layers and make them trainable
+            for layer in age_model.base_model.layers[171:]:  # 147 # 171 - 1st in ResNet50
+                layer.trainable = True
+
+            # Compile model
+            age_model.compile()
+
+            age_model.model.fit_generator(
+                generator=train_generator,
+                validation_data=validation_generator,
+                epochs=3,
+                callbacks=callbacks,
+                verbose=1,
+            )
+
         age_model.model.fit_generator(
-            generator=train_generator, validation_data=validation_generator, epochs=EPOCHS, verbose=1
+            generator=train_generator,
+            validation_data=validation_generator,
+            epochs=EPOCHS,
+            callbacks=callbacks,
+            verbose=1,
         )
 
         # save the entire model

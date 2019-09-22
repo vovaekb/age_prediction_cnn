@@ -13,33 +13,33 @@ RESNET_MODEL_NAME = "ResNet50"
 
 class AgeRegressionNet:
     def __init__(self, base_model, img_shape, predict_gender=False):
-        self.base_model = base_model
+        self.base_model_name = base_model
         self.img_shape = img_shape
         self.predict_gender = predict_gender
         self._get_base_module()
 
     def build(self):
-        if self.base_model == MOBILENET_MODEL_NAME:
-            base_model = MobileNetV2(input_shape=self.img_shape, include_top=False, weights="imagenet")
-        elif self.base_model == RESNET_MODEL_NAME:
-            base_model = ResNet50(input_shape=self.img_shape, include_top=False, weights="imagenet")
+        if self.base_model_name == MOBILENET_MODEL_NAME:
+            self.base_model = MobileNetV2(input_shape=self.img_shape, include_top=False, weights="imagenet")
+        elif self.base_model_name == RESNET_MODEL_NAME:
+            self.base_model = ResNet50(input_shape=self.img_shape, include_top=False, weights="imagenet")
 
-        x = base_model.output
+        x = self.base_model.output
         x = GlobalAveragePooling2D()(x)
 
         if not self.predict_gender:
             x = Dense(units=1, activation="sigmoid")(x)
-            self.model = Model(inputs=base_model.input, outputs=x)
+            self.model = Model(inputs=self.base_model.input, outputs=x)
         else:
             age_output = Dense(units=1, activation="sigmoid", name="age_output")(x)
             gender_output = Dense(units=GENDERS_NUMBER, activation="softmax", name="gender_output")(x)
-            self.model = Model(inputs=base_model.input, outputs=[age_output, gender_output])
+            self.model = Model(inputs=self.base_model.input, outputs=[age_output, gender_output])
 
     def _get_base_module(self):
         # import Keras base model module
-        if self.base_model == MOBILENET_MODEL_NAME:
+        if self.base_model_name == MOBILENET_MODEL_NAME:
             self.base_module = importlib.import_module("keras.applications.mobilenet_v2")
-        elif self.base_model == RESNET_MODEL_NAME:
+        elif self.base_model_name == RESNET_MODEL_NAME:
             self.base_module = importlib.import_module("keras.applications.resnet50")
 
     def compile(self):
@@ -53,6 +53,7 @@ class AgeRegressionNet:
             self.model.compile(
                 optimizer=optimizer,
                 loss={"age_output": age_loss, "gender_output": "categorical_crossentropy"},
+                loss_weights={"age_output": 1.0, "gender_output": 1.0},
                 metrics={"gender_output": "accuracy"},
             )
 

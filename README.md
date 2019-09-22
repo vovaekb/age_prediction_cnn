@@ -38,7 +38,7 @@ To run this script:
 
 When you are going to train the age predictor you just need to run python.
 
-    python train_model.py --type <model_type> --range_mode True --train_sample_dir <train_sample_dir> --test_sample_dir <test_sample_dir> --model_path <model_path> --base_model <base_model_name> --img_dim <img_dim> --age_deviation <age_deviation> --load True --predict_gender True
+    python train_model.py --type <model_type> --range_mode True --train_sample_dir <train_sample_dir> --test_sample_dir <test_sample_dir> --model_path <model_path> --base_model <base_model_name> --img_dim <img_dim> --age_deviation <age_deviation> --load True --predict_gender True --fine_tuning True
 
 Here **--type** denotes the type of NN model and can have two values ("classification" and "regression").
 
@@ -54,10 +54,11 @@ Parameters **--train_sample_dir** and **--test_sample_dir** specify path to trai
 
 Optional parameters:
 
-**--load means** that trained model will be loaded from h5 file rather than trained from scratch.
+**--load** means that trained model will be loaded from h5 file rather than trained from scratch.
 
 **--predict_gender** allows to apply gender classification in addition to age prediction.
 
+**--fine_tuning** applies fine tuning of CNN model (freezing layers in base models and unzfreezing Conv layers).
 
 If you run the application in training mode you should see something like this:
 
@@ -136,6 +137,19 @@ We also apply gender classification of a person on image. You can include this o
 
 To run loading model from file and predicting age and gender use command with option --load True.
 
+## Optimization
+
+### Learning rate schedules
+In training optimization we use learning rate schedules to optimize finding best learning rate. We use [ReduceLROnPlateau](https://www.tensorflow.org/api_docs/python/tf/keras/callbacks/ReduceLROnPlateau) method from keras.callbacks module.
+
+
+### Fine tuning for model
+Optionally we include applying fine tuning for all modes of age and gender prediction. We freeze layers of base model, train the model, then unfreeze last convolutional layer in the base model and retrain the model again. 
+
+To run the training model with fine tuning use this command
+
+    python train_model.py <options> --fine_tuning True
+
 
 ## Datasets
 This project uses this dataset to train the prediction model:
@@ -149,6 +163,8 @@ This project uses this dataset to train the prediction model:
 3. Mark Sandler, Andrew Howard, Menglong Zhu, Andrey Zhmoginov, Liang-Chieh Chen. "MobileNetV2: Inverted Residuals and Linear Bottlenecks." The IEEE Conference on Computer Vision and Pattern Recognition (CVPR), 2018
 4. Kaiming He, Xiangyu Zhang, Shaoqing Ren, Jian Sun. "Deep Residual Learning for Image Recognition." 2016 IEEE Conference on Computer Vision and Pattern Recognition (CVPR)
 5. [Keras, Regression, and CNNs](https://www.pyimagesearch.com/2019/01/28/keras-regression-and-cnns/)
+6. [Fine Tuning with Keras and Deep Learning](https://www.pyimagesearch.com/2019/06/03/fine-tuning-with-keras-and-deep-learning/)
+7. [Keras learning rate schedules and decay](https://www.pyimagesearch.com/2019/07/22/keras-learning-rate-schedules-and-decay/)
 
 ## Copyright
 
