@@ -5,13 +5,15 @@ import argparse
 from facematch.age_prediction.handlers.data_generator import DataGenerator
 from keras.models import load_model
 from keras.utils.generic_utils import get_custom_objects
-from keras.callbacks import ReduceLROnPlateau
+from keras.callbacks import ReduceLROnPlateau, ModelCheckpoint
+from facematch.age_prediction.optimization.clr_callback import CyclicLR
 from facematch.age_prediction.models.age_classification_net import AgeClassificationNet
 from facematch.age_prediction.models.age_regression_net import AgeRegressionNet
 from facematch.age_prediction.utils.metrics import earth_movers_distance, age_mae
 from facematch.age_prediction.utils.utils import get_range
 
-EPOCHS = 13
+EPOCHS = 15
+DATASET_SIZE = 1000
 
 parser = argparse.ArgumentParser()
 
@@ -24,6 +26,7 @@ def train_model():
     parser.add_argument("-w", "--model_path", help="Path to model JSON and weights")
     parser.add_argument("-s", "--img_dim", type=int, help="Dimension of input images for training (width, height)")
     parser.add_argument("-bs", "--batch_size", type=int, default=5, help="Size of batch to use for training")
+    parser.add_argument("-o", "--lr_scheduler", type=str, default="reduce_lr_on_plateau", help="Learning rate scheduler to use (reduce_lr_on_plateau, cyclic_lr)")
     parser.add_argument("-dev", "--age_deviation", type=int, default=5, help="Deviation in age vector")
     parser.add_argument("-t", "--type", type=str, help="Type of model to use (regression, classification)")  #
     parser.add_argument(
@@ -82,11 +85,19 @@ def train_model():
         # Fit generator and start training
         print("Starting training ...")
 
+        # Add model checkpoint
+        checkpoint = ModelCheckpoint('model_out.hdf5', monitor='val_loss', verbose=1, save_best_only = True)
+
         # Apply learning rate schedules
-        reduce_lr = ReduceLROnPlateau(monitor="val_loss", factor=0.2, patience=5, min_lr=0.001)
+        if args["lr_scheduler"] == "reduce_lr_on_plateau":
+            lr_scheduler = ReduceLROnPlateau(monitor="val_loss", factor=0.2, patience=5, min_lr=0.00001)
+        else:
+            # We using the triangular learning rate policy and
+            #  base_lr (initial learning rate which is the lower boundary in the cycle)
+            lr_scheduler = CyclicLR(mode='triangular', base_lr=0.0001, max_lr=0.01, step_size=8*(DATASET_SIZE / args['batch_size']))
 
         # add the learning rate schedule to the list of callbacks
-        callbacks = [reduce_lr]
+        callbacks = [checkpoint, lr_scheduler]
 
         # Applying fine tuning
         if args["fine_tuning"]:
@@ -109,18 +120,18 @@ def train_model():
             age_model.model.fit_generator(
                 generator=train_generator,
                 validation_data=validation_generator,
-                epochs=3,
+                epochs=15,
                 callbacks=callbacks,
                 verbose=1,
             )
-
-        age_model.model.fit_generator(
-            generator=train_generator,
-            validation_data=validation_generator,
-            epochs=EPOCHS,
-            callbacks=callbacks,
-            verbose=1,
-        )
+        else:
+            age_model.model.fit_generator(
+                generator=train_generator,
+                validation_data=validation_generator,
+                epochs=EPOCHS,
+                callbacks=callbacks,
+                verbose=1,
+            )
 
         # save the entire model
         model_file = os.path.join(args["model_path"], "model.h5")

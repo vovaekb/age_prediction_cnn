@@ -38,7 +38,7 @@ To run this script:
 
 When you are going to train the age predictor you just need to run python.
 
-    python train_model.py --type <model_type> --range_mode True --train_sample_dir <train_sample_dir> --test_sample_dir <test_sample_dir> --model_path <model_path> --base_model <base_model_name> --img_dim <img_dim> --age_deviation <age_deviation> --load True --predict_gender True --fine_tuning True
+    python train_model.py --type <model_type> --range_mode True --train_sample_dir <train_sample_dir> --test_sample_dir <test_sample_dir> --model_path <model_path> --base_model <base_model_name> --img_dim <img_dim> --batch_size <batch_size> --lr_scheduler <lr_scheduler> --age_deviation <age_deviation> --load True --predict_gender True --fine_tuning True
 
 Here **--type** denotes the type of NN model and can have two values ("classification" and "regression").
 
@@ -49,6 +49,10 @@ Parameters **--train_sample_dir** and **--test_sample_dir** specify path to trai
 **--base_model** means CNN architecture used (two values: MobileNetV2 and ResNet50).
 
 **--img_dim** means dimension of input images for training (width, height), 128 on default.
+
+**--batch_size** specifies the size of batch to use for training.
+
+**--lr_scheduler** allows to specify learning rate scheduler to use (reduce_lr_on_plateau, cyclic_lr).
 
 **--age_deviation** specifies the deviation in age vector (in years), 5 on default
 
@@ -140,8 +144,9 @@ To run loading model from file and predicting age and gender use command with op
 ## Optimization
 
 ### Learning rate schedules
-In training optimization we use learning rate schedules to optimize finding best learning rate. We use [ReduceLROnPlateau](https://www.tensorflow.org/api_docs/python/tf/keras/callbacks/ReduceLROnPlateau) method from keras.callbacks module.
+In training optimization we use learning rate schedules to optimize finding best learning rate. We use [ReduceLROnPlateau](https://www.tensorflow.org/api_docs/python/tf/keras/callbacks/ReduceLROnPlateau) and [CyclicLR](https://github.com/bckenstler/CLR) methods from keras.callbacks module.
 
+Parameter **--lr_scheduler** allows to set one of these LR schedulers.
 
 ### Fine tuning for model
 Optionally we include applying fine tuning for all modes of age and gender prediction. We freeze layers of base model, train the model, then unfreeze last convolutional layer in the base model and retrain the model again. 
