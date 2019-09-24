@@ -26,7 +26,13 @@ def train_model():
     parser.add_argument("-w", "--model_path", help="Path to model JSON and weights")
     parser.add_argument("-s", "--img_dim", type=int, help="Dimension of input images for training (width, height)")
     parser.add_argument("-bs", "--batch_size", type=int, default=5, help="Size of batch to use for training")
-    parser.add_argument("-o", "--lr_scheduler", type=str, default="reduce_lr_on_plateau", help="Learning rate scheduler to use (reduce_lr_on_plateau, cyclic_lr)")
+    parser.add_argument(
+        "-o",
+        "--lr_scheduler",
+        type=str,
+        default="reduce_lr_on_plateau",
+        help="Learning rate scheduler to use (reduce_lr_on_plateau, cyclic_lr)",
+    )
     parser.add_argument("-dev", "--age_deviation", type=int, default=5, help="Deviation in age vector")
     parser.add_argument("-t", "--type", type=str, help="Type of model to use (regression, classification)")  #
     parser.add_argument(
@@ -86,7 +92,7 @@ def train_model():
         print("Starting training ...")
 
         # Add model checkpoint
-        checkpoint = ModelCheckpoint('model_out.hdf5', monitor='val_loss', verbose=1, save_best_only = True)
+        checkpoint = ModelCheckpoint("model_out.hdf5", monitor="val_loss", verbose=1, save_best_only=True)
 
         # Apply learning rate schedules
         if args["lr_scheduler"] == "reduce_lr_on_plateau":
@@ -94,7 +100,9 @@ def train_model():
         else:
             # We using the triangular learning rate policy and
             #  base_lr (initial learning rate which is the lower boundary in the cycle)
-            lr_scheduler = CyclicLR(mode='triangular', base_lr=0.0001, max_lr=0.01, step_size=8*(DATASET_SIZE / args['batch_size']))
+            lr_scheduler = CyclicLR(
+                mode="triangular", base_lr=0.0001, max_lr=0.01, step_size=8 * (DATASET_SIZE / args["batch_size"])
+            )
 
         # add the learning rate schedule to the list of callbacks
         callbacks = [checkpoint, lr_scheduler]
