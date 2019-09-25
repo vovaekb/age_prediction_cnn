@@ -20,7 +20,6 @@ class MetadataTransformer:
 
         new_file_name = f"{image_id}_{gender}_{age}.jpg"
         new_file_path = os.path.join(self.output_directory, new_file_name)
-        print(new_file_path)
         shutil.copy(file_path, new_file_path)
 
     def process_samples_directory(self):

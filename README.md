@@ -38,7 +38,7 @@ To run this script:
 
 When you are going to train the age predictor you just need to run python.
 
-    python train_model.py --type <model_type> --range_mode True --train_sample_dir <train_sample_dir> --test_sample_dir <test_sample_dir> --model_path <model_path> --base_model <base_model_name> --img_dim <img_dim> --batch_size <batch_size> --lr_scheduler <lr_scheduler> --age_deviation <age_deviation> --load True --predict_gender True --fine_tuning True
+    python train_model.py --type <model_type> --range_mode True --train_sample_dir <train_sample_dir> --test_sample_dir <test_sample_dir> --model_path <model_path> --base_model <base_model_name> --img_dim <img_dim> --batch_size <batch_size> --lr_scheduler <lr_scheduler> --age_deviation <age_deviation> --load True --predict_gender True --fine_tuning True --lr_find True
 
 Here **--type** denotes the type of NN model and can have two values ("classification" and "regression").
 
@@ -63,6 +63,8 @@ Optional parameters:
 **--predict_gender** allows to apply gender classification in addition to age prediction.
 
 **--fine_tuning** applies fine tuning of CNN model (freezing layers in base models and unzfreezing Conv layers).
+
+**--lr_find** specifies whether or not to find optimal learning rate (value 0 or 1).
 
 If you run the application in training mode you should see something like this:
 
@@ -147,6 +149,13 @@ To run loading model from file and predicting age and gender use command with op
 In training optimization we use learning rate schedules to optimize finding best learning rate. We use [ReduceLROnPlateau](https://www.tensorflow.org/api_docs/python/tf/keras/callbacks/ReduceLROnPlateau) and [CyclicLR](https://github.com/bckenstler/CLR) methods from keras.callbacks module.
 
 Parameter **--lr_scheduler** allows to set one of these LR schedulers.
+
+#### Learning Rate Finder
+There is an option to automatically find optimal learning rates. Learning Rate Finder starts training in 3 epochs exponentially increasing the learning rate from min_lr (1e-10) to max_lr (1e+1) after each batch update and plot Loss vs. Learning rate. The final plot will be saved in the folder output.
+
+Use parameter **--lr_find** to run Learning Rate Finder.
+
+![](_readme/images/lrfind_plot.png)
 
 ### Fine tuning for model
 Optionally we include applying fine tuning for all modes of age and gender prediction. We freeze layers of base model, train the model, then unfreeze last convolutional layer in the base model and retrain the model again. 

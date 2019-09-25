@@ -57,8 +57,8 @@ class AgeClassificationNet:
             self.base_module = importlib.import_module("keras.applications.resnet50")
 
     def compile(self):
-        learning_rate = 0.001
-        optimizer = Adam(lr=learning_rate)
+        learning_rate = 1e-2  # 1e-5 # 1e-1 # MIN_LR in Learning rate Finder # 0.0001 # 0.001
+        optimizer = Adam(lr=learning_rate)  # SGD(lr=learning_rate)
 
         if self.range_mode:
             age_loss = "categorical_crossentropy"

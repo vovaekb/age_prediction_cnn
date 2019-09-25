@@ -1,12 +1,14 @@
 import os
 import cv2
+import matplotlib.pyplot as plt
 import numpy as np
 import argparse
 from facematch.age_prediction.handlers.data_generator import DataGenerator
 from keras.models import load_model
 from keras.utils.generic_utils import get_custom_objects
-from keras.callbacks import ReduceLROnPlateau, ModelCheckpoint
+from keras.callbacks import ReduceLROnPlateau, ModelCheckpoint, EarlyStopping
 from facematch.age_prediction.optimization.clr_callback import CyclicLR
+from facematch.age_prediction.optimization.learningratefinder import LearningRateFinder
 from facematch.age_prediction.models.age_classification_net import AgeClassificationNet
 from facematch.age_prediction.models.age_regression_net import AgeRegressionNet
 from facematch.age_prediction.utils.metrics import earth_movers_distance, age_mae
@@ -48,6 +50,9 @@ def train_model():
     parser.add_argument("-l", "--load", default=False, type=bool, help="Load model from file")
     parser.add_argument("-gnd", "--predict_gender", default=False, type=bool, help="Apply gender prediction")
     parser.add_argument("-ft", "--fine_tuning", default=False, type=bool, help="Apply fine tuning to model")
+    parser.add_argument(
+        "-f", "--lr_find", type=bool, default=False, help="whether or not to find optimal learning rate"
+    )
     args = vars(parser.parse_args())
 
     img_dim = args["img_dim"]
@@ -91,17 +96,47 @@ def train_model():
         # Fit generator and start training
         print("Starting training ...")
 
+        # Automatic finding best learning rate
+        if args["lr_find"]:
+            # define the path to the output learning rate finder plot, training
+            # history plot and cyclical learning rate plot
+            LRFIND_PLOT_PATH = os.path.sep.join(["output", "lrfind_plot.png"])
+            # TRAINING_PLOT_PATH = os.path.sep.join(["output", "training_plot.png"])
+            # CLR_PLOT_PATH = os.path.sep.join(["output", "clr_plot.png"])
+
+            lrf = LearningRateFinder(age_model.model)
+            lrf.find(
+                train_generator,
+                1e-10,
+                1e1,
+                stepsPerEpoch=np.ceil((DATASET_SIZE / float(args["batch_size"]))),
+                batchSize=args["batch_size"],
+                epochs=3,
+            )
+
+            # plot the loss for the various learning rates and save the
+            # resulting plot to disk
+            lrf.plot_loss()
+            plt.savefig(LRFIND_PLOT_PATH)
+
+            # gracefully exit the script so we can adjust our learning rates
+            # in the config and then train the network for our full set of
+            # epochs
+            print("[INFO] learning rate finder complete")
+            print("[INFO] examine plot and adjust learning rates before training")
+            return
+
         # Add model checkpoint
         checkpoint = ModelCheckpoint("model_out.hdf5", monitor="val_loss", verbose=1, save_best_only=True)
 
         # Apply learning rate schedules
         if args["lr_scheduler"] == "reduce_lr_on_plateau":
-            lr_scheduler = ReduceLROnPlateau(monitor="val_loss", factor=0.2, patience=5, min_lr=0.00001)
+            lr_scheduler = ReduceLROnPlateau(monitor="val_loss", factor=0.2, patience=3, min_lr=1e-6)
         else:
             # We using the triangular learning rate policy and
             #  base_lr (initial learning rate which is the lower boundary in the cycle)
             lr_scheduler = CyclicLR(
-                mode="triangular", base_lr=0.0001, max_lr=0.01, step_size=8 * (DATASET_SIZE / args["batch_size"])
+                mode="triangular", base_lr=1e-4, max_lr=1e-1, step_size=8 * (DATASET_SIZE / args["batch_size"])
             )
 
         # add the learning rate schedule to the list of callbacks
@@ -119,7 +154,7 @@ def train_model():
             )
 
             # unfreeze the final set of CONV layers and make them trainable
-            for layer in age_model.base_model.layers[171:]:  # 147 # 171 - 1st in ResNet50
+            for layer in age_model.base_model.layers[147:]:  # 147 - MobileNetV2, 171 - ResNet50
                 layer.trainable = True
 
             # Compile model
