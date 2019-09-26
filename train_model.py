@@ -1,5 +1,6 @@
 import os
 import cv2
+import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 import argparse
@@ -9,6 +10,7 @@ from keras.utils.generic_utils import get_custom_objects
 from keras.callbacks import ReduceLROnPlateau, ModelCheckpoint, EarlyStopping
 from facematch.age_prediction.optimization.clr_callback import CyclicLR
 from facematch.age_prediction.optimization.learningratefinder import LearningRateFinder
+from facematch.age_prediction.callbacks.trainingmonitor import TrainingMonitor
 from facematch.age_prediction.models.age_classification_net import AgeClassificationNet
 from facematch.age_prediction.models.age_regression_net import AgeRegressionNet
 from facematch.age_prediction.utils.metrics import earth_movers_distance, age_mae
@@ -16,6 +18,8 @@ from facematch.age_prediction.utils.utils import get_range
 
 EPOCHS = 15
 DATASET_SIZE = 1000
+
+matplotlib.use("Agg")
 
 parser = argparse.ArgumentParser()
 
@@ -129,18 +133,32 @@ def train_model():
         # Add model checkpoint
         checkpoint = ModelCheckpoint("model_out.hdf5", monitor="val_loss", verbose=1, save_best_only=True)
 
+        es = EarlyStopping(monitor="val_loss", mode="min", verbose=1, patience=5)
+
+        # Add training monitor
+        # construct the set of callbacks
+        figPath = os.path.sep.join(["output", "{}.png".format(os.getpid())])
+        jsonPath = os.path.sep.join(["output", "{}.json".format(os.getpid())])
+
+        training_monitor = TrainingMonitor(figPath, jsonPath=jsonPath)
+
         # Apply learning rate schedules
         if args["lr_scheduler"] == "reduce_lr_on_plateau":
-            lr_scheduler = ReduceLROnPlateau(monitor="val_loss", factor=0.2, patience=3, min_lr=1e-6)
+            lr_scheduler = ReduceLROnPlateau(
+                monitor="val_loss", factor=0.2, patience=3, min_lr=1e-6
+            )  # patience=5, min_lr=0.00001
         else:
             # We using the triangular learning rate policy and
             #  base_lr (initial learning rate which is the lower boundary in the cycle)
             lr_scheduler = CyclicLR(
-                mode="triangular", base_lr=1e-4, max_lr=1e-1, step_size=8 * (DATASET_SIZE / args["batch_size"])
+                mode="triangular",
+                base_lr=1e-4,
+                max_lr=1e-1,
+                step_size=8 * (DATASET_SIZE / args["batch_size"]),  # base_lr=0.0001, max_lr=0.01
             )
 
         # add the learning rate schedule to the list of callbacks
-        callbacks = [checkpoint, lr_scheduler]
+        callbacks = [checkpoint, training_monitor, lr_scheduler]
 
         # Applying fine tuning
         if args["fine_tuning"]:
@@ -163,7 +181,7 @@ def train_model():
             age_model.model.fit_generator(
                 generator=train_generator,
                 validation_data=validation_generator,
-                epochs=15,
+                epochs=35,  # 15,
                 callbacks=callbacks,
                 verbose=1,
             )
