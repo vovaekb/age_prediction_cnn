@@ -18,8 +18,13 @@ Age prediction CNN is compatible with Python 3.6 and is distributed under the MI
     mkdir age_prediction_cnn
     cd age_prediction_cnn
 
-    # clone and install locally
+    # clone and install prerequisites locally
     git clone git@github.com:vovaekb/age_prediction_cnn.git
+    cd age_prediction_cnn
+    pip install -r requirements.txt
+    
+    # create a folder for saving model
+    mkdir -p data/model
 
 ## Preparing data
 Use some preprocessing script to crop out faces in images and obtain a person age. You should have a batch of image files with faces named in following format:
@@ -157,12 +162,19 @@ Use parameter **--lr_find** to run Learning Rate Finder.
 
 ![](_readme/images/lrfind_plot.png)
 
-### Fine tuning for model
+### Fine tuning model
 Optionally we include applying fine tuning for all modes of age and gender prediction. We freeze layers of base model, train the model, then unfreeze last convolutional layer in the base model and retrain the model again. 
 
 To run the training model with fine tuning use this command
 
     python train_model.py <options> --fine_tuning True
+
+### Monitoring performance
+We using TrainingMonitor and ModelCheckpoint for monitoring performance of training. TrainingMonitor allows to record loss and accuracy metrics after each epoch and build a plot Loss/Accuracy vs Epochs. This plot allows us to spot overfitting earlier during the training and find out whether the learning rate found is optimal.
+
+![](_readme/images/acc_loss_plot.png) 
+
+ModelCheckpoint is tracking particular metric (accuracy, loss) after each epoch and prints out whether the metric has improved. It can also be setup to save the network weights only when there is an improvement in classification accuracy (e.g. on validation dataset: monitor='val_acc').
 
 
 ## Datasets
@@ -176,6 +188,7 @@ This project uses this dataset to train the prediction model:
     IEEE Transactions on Image Processing (2018).
 3. Mark Sandler, Andrew Howard, Menglong Zhu, Andrey Zhmoginov, Liang-Chieh Chen. "MobileNetV2: Inverted Residuals and Linear Bottlenecks." The IEEE Conference on Computer Vision and Pattern Recognition (CVPR), 2018
 4. Kaiming He, Xiangyu Zhang, Shaoqing Ren, Jian Sun. "Deep Residual Learning for Image Recognition." 2016 IEEE Conference on Computer Vision and Pattern Recognition (CVPR)
+5. Adrian Rosebrock (2017) "Deep Learning for Computer Vision with Python" [ebook].
 5. [Keras, Regression, and CNNs](https://www.pyimagesearch.com/2019/01/28/keras-regression-and-cnns/)
 6. [Fine Tuning with Keras and Deep Learning](https://www.pyimagesearch.com/2019/06/03/fine-tuning-with-keras-and-deep-learning/)
 7. [Keras learning rate schedules and decay](https://www.pyimagesearch.com/2019/07/22/keras-learning-rate-schedules-and-decay/)
