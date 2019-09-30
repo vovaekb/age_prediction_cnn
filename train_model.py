@@ -102,18 +102,15 @@ def train_model():
 
         # Automatic finding best learning rate
         if args["lr_find"]:
-            # define the path to the output learning rate finder plot, training
-            # history plot and cyclical learning rate plot
+            # define the path to the output learning rate finder plot
             LRFIND_PLOT_PATH = os.path.sep.join(["output", "lrfind_plot.png"])
-            # TRAINING_PLOT_PATH = os.path.sep.join(["output", "training_plot.png"])
-            # CLR_PLOT_PATH = os.path.sep.join(["output", "clr_plot.png"])
 
             lrf = LearningRateFinder(age_model.model)
             lrf.find(
                 train_generator,
                 1e-10,
                 1e1,
-                stepsPerEpoch=np.ceil((DATASET_SIZE / float(args["batch_size"]))),
+                stepsPerEpoch=np.ceil((train_generator.dataset_size / float(args["batch_size"]))),
                 batchSize=args["batch_size"],
                 epochs=3,
             )
@@ -154,7 +151,7 @@ def train_model():
                 mode="triangular",
                 base_lr=1e-4,
                 max_lr=1e-1,
-                step_size=8 * (DATASET_SIZE / args["batch_size"]),  # base_lr=0.0001, max_lr=0.01
+                step_size=8 * (train_generator.dataset_size / args["batch_size"]),
             )
 
         # add the learning rate schedule to the list of callbacks
@@ -172,7 +169,7 @@ def train_model():
             )
 
             # unfreeze the final set of CONV layers and make them trainable
-            for layer in age_model.base_model.layers[147:]:  # 147 - MobileNetV2, 171 - ResNet50
+            for layer in age_model.base_model.layers[152:]:  # 147 - MobileNetV2, 171 - ResNet50
                 layer.trainable = True
 
             # Compile model
@@ -181,7 +178,7 @@ def train_model():
             age_model.model.fit_generator(
                 generator=train_generator,
                 validation_data=validation_generator,
-                epochs=35,  # 15,
+                epochs=35,
                 callbacks=callbacks,
                 verbose=1,
             )
@@ -231,7 +228,7 @@ def train_model():
                         predicted_range = f"({range_start}, {range_end})"
                     print(f"Predicted age range: {predicted_range}, true age: {true_age}")
                 else:
-                    mean_ind = np.where(prediction[0] == np.amax(prediction[0]))[0][0]
+                    mean_ind = np.where(prediction[0][0] == np.amax(prediction[0][0]))[0][0]
                     print(f"Predicted age: {mean_ind}, true age: {true_age}")
             else:
                 # Regression mode

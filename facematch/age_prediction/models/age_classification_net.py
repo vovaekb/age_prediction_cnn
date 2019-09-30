@@ -1,6 +1,6 @@
 import importlib
 from keras.models import Model
-from keras.optimizers import Adam, SGD
+from keras.optimizers import Adam
 from keras.layers import Dense, GlobalAveragePooling2D
 from keras.applications.mobilenet_v2 import MobileNetV2
 from keras.applications.resnet50 import ResNet50
@@ -58,7 +58,7 @@ class AgeClassificationNet:
 
     def compile(self):
         learning_rate = 1e-2  # 1e-5 # 1e-1 # MIN_LR in Learning rate Finder # 0.0001 # 0.001
-        optimizer = Adam(lr=learning_rate)  # SGD(lr=learning_rate)
+        optimizer = Adam(lr=learning_rate)
 
         if self.range_mode:
             age_loss = "categorical_crossentropy"
