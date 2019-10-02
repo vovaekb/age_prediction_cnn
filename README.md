@@ -169,12 +169,16 @@ To run the training model with fine tuning use this command
 
     python train_model.py <options> --fine_tuning True
 
+### Terminating training when NaNs occur in loss
+We use TerminateOnNan callback which terminates the training once NaN (Not-a-Number) values appear in loss. It checks results when batch ends, retrieves loss from logs and stops training if it is Nan.  
+
 ### Monitoring performance
 We using TrainingMonitor and ModelCheckpoint for monitoring performance of training. TrainingMonitor allows to record loss and accuracy metrics after each epoch and build a plot Loss/Accuracy vs Epochs. This plot allows us to spot overfitting earlier during the training and find out whether the learning rate found is optimal.
 
 ![](_readme/images/acc_loss_plot.png) 
 
 ModelCheckpoint is tracking particular metric (accuracy, loss) after each epoch and prints out whether the metric has improved. It can also be setup to save the network weights only when there is an improvement in classification accuracy (e.g. on validation dataset: monitor='val_acc').
+
 
 
 ## Datasets
