@@ -4,20 +4,22 @@ import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 import argparse
+from time import time
 from facematch.age_prediction.handlers.data_generator import DataGenerator
+from keras import backend as K
 from keras.models import load_model
 from keras.utils.generic_utils import get_custom_objects
 from keras.callbacks import ReduceLROnPlateau, ModelCheckpoint, EarlyStopping
 from facematch.age_prediction.optimization.clr_callback import CyclicLR
 from facematch.age_prediction.optimization.learningratefinder import LearningRateFinder
 from facematch.age_prediction.callbacks.trainingmonitor import TrainingMonitor
+from facematch.age_prediction.callbacks.terminateonnan import TerminateOnNan
 from facematch.age_prediction.models.age_classification_net import AgeClassificationNet
 from facematch.age_prediction.models.age_regression_net import AgeRegressionNet
 from facematch.age_prediction.utils.metrics import earth_movers_distance, age_mae
 from facematch.age_prediction.utils.utils import get_range
 
 EPOCHS = 15
-DATASET_SIZE = 1000
 
 matplotlib.use("Agg")
 
@@ -139,6 +141,8 @@ def train_model():
 
         training_monitor = TrainingMonitor(figPath, jsonPath=jsonPath)
 
+        terminateonnan = TerminateOnNan()
+
         # Apply learning rate schedules
         if args["lr_scheduler"] == "reduce_lr_on_plateau":
             lr_scheduler = ReduceLROnPlateau(
@@ -155,7 +159,7 @@ def train_model():
             )
 
         # add the learning rate schedule to the list of callbacks
-        callbacks = [checkpoint, training_monitor, lr_scheduler]
+        callbacks = [checkpoint, training_monitor, lr_scheduler, terminateonnan]
 
         # Applying fine tuning
         if args["fine_tuning"]:
