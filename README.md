@@ -14,16 +14,14 @@ Age prediction CNN is compatible with Python 3.6 and is distributed under the MI
 
 ## Installation:
 
-    # create age_prediction_cnn folder
-    mkdir age_prediction_cnn
-    cd age_prediction_cnn
+Clone and install prerequisites locally
 
-    # clone and install prerequisites locally
     git clone git@github.com:vovaekb/age_prediction_cnn.git
     cd age_prediction_cnn
     pip install -r requirements.txt
     
-    # create a folder for saving model
+create a folder for saving model
+
     mkdir -p data/model
 
 ## Preparing data
