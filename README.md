@@ -140,38 +140,38 @@ To run training in age classification mode use command:
 To run loading model from file and predicting age use command with option --load True.
 
 ## Gender classification
-We also apply gender classification of a person on image. You can include this option using parameter --predict_gender:
+👩👨 We also apply gender classification of a person on image. You can include this option using parameter --predict_gender:
 
     python train_model.py --type <model_type> <options> --predict_gender True
 
 To run loading model from file and predicting age and gender use command with option --load True.
 
-## 📈 Optimization
+##  Optimization
 
 ### Learning rate schedules
-In training optimization we use learning rate schedules to optimize finding best learning rate. We use [ReduceLROnPlateau](https://www.tensorflow.org/api_docs/python/tf/keras/callbacks/ReduceLROnPlateau) and [CyclicLR](https://github.com/bckenstler/CLR) methods from keras.callbacks module.
+📈 In training optimization we use learning rate schedules to optimize finding best learning rate. We use [ReduceLROnPlateau](https://www.tensorflow.org/api_docs/python/tf/keras/callbacks/ReduceLROnPlateau) and [CyclicLR](https://github.com/bckenstler/CLR) methods from keras.callbacks module.
 
 Parameter **--lr_scheduler** allows to set one of these LR schedulers.
 
-#### 🕵️ Learning Rate Finder
-There is an option to automatically find optimal learning rates. Learning Rate Finder starts training in 3 epochs exponentially increasing the learning rate from min_lr (1e-10) to max_lr (1e+1) after each batch update and plot Loss vs. Learning rate. The final plot will be saved in the folder output.
+#### Learning Rate Finder
+🕵️ There is an option to automatically find optimal learning rates. Learning Rate Finder starts training in 3 epochs exponentially increasing the learning rate from min_lr (1e-10) to max_lr (1e+1) after each batch update and plot Loss vs. Learning rate. The final plot will be saved in the folder output.
 
 Use parameter **--lr_find** to run Learning Rate Finder.
 
 ![](_readme/images/lrfind_plot.png)
 
-### 🎛️ Fine tuning model
-Optionally we include applying fine tuning for all modes of age and gender prediction. We freeze layers of base model, train the model, then unfreeze last convolutional layer in the base model and retrain the model again. 
+### Fine tuning model
+🎛️ Optionally we include applying fine tuning for all modes of age and gender prediction. We freeze layers of base model, train the model, then unfreeze last convolutional layer in the base model and retrain the model again. 
 
 To run the training model with fine tuning use this command
 
     python train_model.py <options> --fine_tuning True
 
-### 🛑 Terminating training when NaNs occur in loss
-We use TerminateOnNan callback which terminates the training once NaN (Not-a-Number) values appear in loss. It checks results when batch ends, retrieves loss from logs and stops training if it is Nan.  
+### Terminating training when NaNs occur in loss
+🛑 We use TerminateOnNan callback which terminates the training once NaN (Not-a-Number) values appear in loss. It checks results when batch ends, retrieves loss from logs and stops training if it is Nan.  
 
-### 👁️ Monitoring performance
-We using TrainingMonitor and ModelCheckpoint for monitoring performance of training. TrainingMonitor allows to record loss and accuracy metrics after each epoch and build a plot Loss/Accuracy vs Epochs. This plot allows us to spot overfitting earlier during the training and find out whether the learning rate found is optimal.
+### Monitoring performance
+👁️We using TrainingMonitor and ModelCheckpoint for monitoring performance of training. TrainingMonitor allows to record loss and accuracy metrics after each epoch and build a plot Loss/Accuracy vs Epochs. This plot allows us to spot overfitting earlier during the training and find out whether the learning rate found is optimal.
 
 ![](_readme/images/acc_loss_plot.png) 
 
@@ -184,8 +184,8 @@ This project uses this dataset to train the prediction model:
 
 [**UTKFace**](https://susanqq.github.io/UTKFace/)
 
-## 🔗  References
-1. Abhimanyu Dubey, Otkrist Gupta, Ramesh Raskar, Nikhil Naik. "Maximum-Entropy Fine-Grained Classification." Proceedings of the 32Nd International Conference on Neural Information Processing Systems (2018).
+##   References
+🔗 1. Abhimanyu Dubey, Otkrist Gupta, Ramesh Raskar, Nikhil Naik. "Maximum-Entropy Fine-Grained Classification." Proceedings of the 32Nd International Conference on Neural Information Processing Systems (2018).
 2. Talebi, Hossein, and Peyman Milanfar. "NIMA: Neural Image Assessment."
     IEEE Transactions on Image Processing (2018).
 3. Mark Sandler, Andrew Howard, Menglong Zhu, Andrey Zhmoginov, Liang-Chieh Chen. "MobileNetV2: Inverted Residuals and Linear Bottlenecks." The IEEE Conference on Computer Vision and Pattern Recognition (CVPR), 2018
