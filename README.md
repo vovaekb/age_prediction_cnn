@@ -1,9 +1,9 @@
 Age prediction CNN Project
 --------------------
 
-This repository provides an implementation of age prediction from images of faces using CNN models.
+🧒🧓 This repository provides an implementation of age prediction from images of faces using CNN models.
 
-Age prediction project allows to use two base CNN models (MobileNetV2 and ResNet50) from [Keras](https://keras.io/applications/). The models are trained via transfer learning, where ImageNet pre-trained CNNs are used and fine-tuned for the classification task.
+🤖 Age prediction project allows to use two base CNN models (MobileNetV2 and ResNet50) from [Keras](https://keras.io/applications/). The models are trained via transfer learning, where ImageNet pre-trained CNNs are used and fine-tuned for the classification task.
 
 Age prediction CNN is compatible with Python 3.6 and is distributed under the MIT license.
 
@@ -25,7 +25,7 @@ create a folder for saving model
     mkdir -p data/model
 
 ## Preparing data
-Use some preprocessing script to crop out faces in images and obtain a person age. You should have a batch of image files with faces named in following format:
+🗃️ Use some preprocessing script to crop out faces in images and obtain a person age. You should have a batch of image files with faces named in following format:
 
     <id>_<age>_<gender>.jpg
 
@@ -39,7 +39,7 @@ To run this script:
 
 ## Running applications
 
-When you are going to train the age predictor you just need to run python.
+🚀 When you are going to train the age predictor you just need to run python.
 
     python train_model.py --type <model_type> --range_mode True --train_sample_dir <train_sample_dir> --test_sample_dir <test_sample_dir> --model_path <model_path> --base_model <base_model_name> --img_dim <img_dim> --batch_size <batch_size> --lr_scheduler <lr_scheduler> --age_deviation <age_deviation> --load True --predict_gender True --fine_tuning True --lr_find True
 
