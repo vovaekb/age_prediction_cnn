@@ -14,7 +14,7 @@ Age prediction CNN is compatible with Python 3.6 and is distributed under the MI
 
 ## Installation:
 
-Clone and install prerequisites locally
+💿 Clone and install prerequisites locally
 
     git clone git@github.com:vovaekb/age_prediction_cnn.git
     cd age_prediction_cnn
