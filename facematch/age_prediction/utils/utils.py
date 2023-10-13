@@ -7,7 +7,19 @@ AGE_RANGES_UPPER_THRESH = 80
 
 
 def build_age_vector(age, deviation):
-    """Build AGE vector as a normal probability histogram"""
+    """
+    Generate an age vector as a normal distribution.
+
+    Parameters:
+        age (float): The mean age value.
+        deviation (float): The standard deviation of the age values.
+
+    Returns:
+        numpy.ndarray: An array representing the age vector.
+
+    Raises:
+        None
+    """
     # Sample from a normal distribution using numpy's random number generator
     mean, std = age, deviation / 5.0
     bins_number = deviation * 2 + 1
@@ -46,14 +58,31 @@ def age_ranges_number():
 
 
 def get_age_range_index(age):
-    """Calculates index of 5-year age range for specified age value"""
+    """
+    Calculates index of 5-year age range for given age.
+
+    Parameters:
+        age (int): The age to determine the age range index for.
+
+    Returns:
+        int: The index of the age range for the given age.
+    """
     age = min(age, AGE_RANGES_UPPER_THRESH)
 
     return int(age / RANGE_LENGTH)
 
 
 def get_range(index):
-    """Returns range for given index"""
+    """
+        Calculate the range of values for a given index.
+
+        Args:
+            index (int): The index of the range.
+
+        Returns:
+            tuple: A tuple containing the start and end values of the range. If the index is equal to the total number of age ranges minus one, the end value will be None.
+
+    """
     if index == age_ranges_number() - 1:
         return (RANGE_LENGTH * index, None)
 

@@ -17,6 +17,15 @@ class TrainingMonitor(BaseLogger):
         self.startAt = startAt
 
     def on_train_begin(self, logs={}):
+        """
+        Initializes the training history dictionary and loads the history from a JSON file.
+
+        Parameters:
+            logs (dict): Optional. A dictionary to store the training logs. Default is an empty dictionary.
+
+        Returns:
+            None
+        """
         # initialize the history dictionary
         self.H = defaultdict(list)  # {}
 
@@ -36,6 +45,22 @@ class TrainingMonitor(BaseLogger):
         """
 
     def on_epoch_end(self, epoch, logs={}):
+        """
+        Called at the end of each epoch during training.
+        
+        Parameters:
+            epoch (int): The current epoch number.
+            logs (dict): Dictionary containing metrics logged during training.
+        
+        Returns:
+            None
+        
+        Description:
+            This function updates the loss, accuracy, and other metrics for the entire training process.
+            It appends the metrics to the corresponding lists in the 'H' dictionary.
+            If the 'jsonPath' attribute is set, it serializes the training history to a JSON file.
+            It also plots the training loss and accuracy using matplotlib and saves the figure to 'figPath'.
+        """
         # loop over the logs and update the loss, accuracy, etc.
         # for the entire training process
         # print(logs)
@@ -44,14 +69,6 @@ class TrainingMonitor(BaseLogger):
             # l = self.H.get(k, [])
             # l.append(v)
 
-        # print(self.H)
-
-        # check to see if the training history should be serialized
-        # to file
-        # if self.jsonPath is not None:
-        #     f = open(self.jsonPath, "w")
-        #     f.write(json.dumps(self.H))
-        #     f.close()
 
         # ensure at least two epochs have passed before plotting
         # (epoch starts at zero)

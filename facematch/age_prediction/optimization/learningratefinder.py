@@ -26,6 +26,9 @@ class LearningRateFinder:
         self.weightsFile = None
 
     def reset(self):
+        """
+        Resets all variables of the object to their initial values.
+        """
         # re-initialize all variables from our constructor
         self.lrs = []
         self.losses = []
@@ -36,6 +39,16 @@ class LearningRateFinder:
         self.weightsFile = None
 
     def on_batch_end(self, batch, logs):
+        """
+        Callback function to be called at the end of each batch during training.
+
+        Args:
+            batch (int): The index of the current batch.
+            logs (dict): Dictionary containing the evaluation results for the model on the batch.
+
+        Returns:
+            None
+        """
         # grab the current learning rate and add log it to the list of
         # learning rates that we've tried
         lr = K.get_value(self.model.optimizer.lr)
@@ -71,6 +84,22 @@ class LearningRateFinder:
     def find(
         self, trainData, startLR, endLR, epochs=None, stepsPerEpoch=None, batchSize=32, sampleSize=2048, verbose=1
     ):
+        """
+        Find a good starting learning rate for the model.
+
+        Args:
+            trainData: The training data.
+            startLR: The starting learning rate.
+            endLR: The ending learning rate.
+            epochs: The number of training epochs (default: None).
+            stepsPerEpoch: The number of steps per epoch (default: None).
+            batchSize: The batch size (default: 32).
+            sampleSize: The sample size (default: 2048).
+            verbose: Verbosity level (default: 1).
+
+        Returns:
+            None.
+        """
         # reset our class-specific variables
         self.reset()
 
@@ -115,6 +144,17 @@ class LearningRateFinder:
         K.set_value(self.model.optimizer.lr, origLR)
 
     def plot_loss(self, skipBegin=10, skipEnd=1, title=""):
+        """
+        Plot the learning rate vs. loss for the given skipBegin, skipEnd, and title.
+
+        Parameters:
+            skipBegin (int): The number of values to skip from the beginning of the learning rate and losses.
+            skipEnd (int): The number of values to skip from the end of the learning rate and losses.
+            title (str): The title to be displayed on the plot.
+
+        Returns:
+            None
+        """
         # grab the learning rate and losses values to plot
         lrs = self.lrs[skipBegin:-skipEnd]
         losses = self.losses[skipBegin:-skipEnd]

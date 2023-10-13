@@ -4,10 +4,28 @@ import shutil
 
 class MetadataTransformer:
     def __init__(self, args):
+        """
+        Initializes a new instance of the class.
+        
+        Args:
+            args (dict): A dictionary containing the arguments.
+                - sample_dir (str): The directory path of the samples.
+                - output_directory (str): The directory path for the output.
+        """
         self.samples_directory = args["sample_dir"]
         self.output_directory = args["output_directory"]
 
     def process_file(self, file, index):
+        """
+        Reads age, gender and image Id from training file and copies it to the output directory.
+
+        Parameters:
+            file (str): The name of the file to be processed.
+            index (int): The index of the file in the list of files.
+
+        Returns:
+            None
+        """
         print(f"Preprocessing file {file}")
 
         # Load image

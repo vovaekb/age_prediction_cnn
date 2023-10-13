@@ -77,7 +77,7 @@ class CyclicLR(Callback):
         self.step_size = step_size
         self.mode = mode
         self.gamma = gamma
-        if scale_fn == None:
+        if scale_fn is None:
             if self.mode == "triangular":
                 self.scale_fn = lambda x: 1.0
                 self.scale_mode = "cycle"
@@ -97,14 +97,23 @@ class CyclicLR(Callback):
         self._reset()
 
     def _reset(self, new_base_lr=None, new_max_lr=None, new_step_size=None):
-        """Resets cycle iterations.
-        Optional boundary/step size adjustment.
         """
-        if new_base_lr != None:
+        Reset the learning rate, max learning rate, and step size of the Cyclical Learning Rate (CLR) scheduler.
+        Optional boundary/step size adjustment.
+
+        Parameters:
+            new_base_lr (float): The new base learning rate. If provided, the base_lr parameter of the CLR scheduler will be updated.
+            new_max_lr (float): The new max learning rate. If provided, the max_lr parameter of the CLR scheduler will be updated.
+            new_step_size (int): The new step size. If provided, the step_size parameter of the CLR scheduler will be updated.
+
+        Returns:
+            None
+        """
+        if new_base_lr is not None:
             self.base_lr = new_base_lr
-        if new_max_lr != None:
+        if new_max_lr is not None:
             self.max_lr = new_max_lr
-        if new_step_size != None:
+        if new_step_size is not None:
             self.step_size = new_step_size
         self.clr_iterations = 0.0
 
@@ -119,6 +128,15 @@ class CyclicLR(Callback):
             )
 
     def on_train_begin(self, logs={}):
+        """
+        Initializes the training process.
+
+        Parameters:
+            logs (dict): A dictionary containing the training logs (default {}). 
+
+        Returns:
+            None
+        """
         logs = logs or {}
 
         if self.clr_iterations == 0:
@@ -127,6 +145,16 @@ class CyclicLR(Callback):
             K.set_value(self.model.optimizer.lr, self.clr())
 
     def on_batch_end(self, epoch, logs=None):
+        """
+        This function is called at the end of each batch during training.
+        
+        Args:
+            epoch (int): The current epoch number.
+            logs (dict, optional): Dictionary containing the metrics results for the current batch. Defaults to None.
+        
+        Returns:
+            None
+        """
 
         logs = logs or {}
         self.trn_iterations += 1
